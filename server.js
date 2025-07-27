@@ -1,12 +1,15 @@
 import express from "express";
 import dotenv from "dotenv";
 import {sql} from "./config/db.js";
+import rateLimiter from "./middleware/rateLimiter.js";
 
 dotenv.config();
 
 const app = express();
 
+app.use(rateLimiter);
 app.use(express.json());
+
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   next();
@@ -97,6 +100,39 @@ app.delete("/api/v1/transactions/:id", async (req, res) => {
     res.status(200).json({ message: "Transaction deleted successfully" });
   } catch (error) {
     console.error("Error deleting transaction:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.get("/api/v1/transactions/summary/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const balanceResult = await sql`
+      SELECT COALESCE(SUM(amount), 0) AS balance
+      FROM transactions
+      WHERE user_id = ${userId}
+    `;
+
+    const incomeResult = await sql`
+      SELECT COALESCE(SUM(amount), 0) AS income
+      FROM transactions
+      WHERE user_id = ${userId} AND amount > 0
+    `;
+
+    const expenseResult = await sql`
+      SELECT COALESCE(SUM(amount), 0) AS expense
+      FROM transactions
+      WHERE user_id = ${userId} AND amount < 0
+    `;
+
+    const balance = balanceResult[0].balance;
+    const income = incomeResult[0].income;
+    const expense = expenseResult[0].expense;
+
+    res.status(200).json({ balance, income, expense });
+  } catch (error) {
+    console.error("Error fetching summary:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
