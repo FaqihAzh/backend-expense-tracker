@@ -1,20 +1,25 @@
+import ApiResponse from '../utils/apiResponse.js';
+import Logger from '../utils/logger.js';
 import rateLimit from "../config/upstash.js";
 
 const rateLimiter = async (req, res, next) => {
   try {
-    const { success } = await rateLimiter.limit(req.ip);
+    const { success } = await rateLimit.limit(req.ip);
 
     if (!success) {
-      return res.status(429).json({
-        message: "Too many requests, please try again later."
-      })
+      Logger.warn(`Rate limit exceeded for IP: ${req.ip}`);
+      return res
+        .status(429)
+        .json(ApiResponse.tooManyRequests());
     }
 
     next();
   } catch (error) {
-    console.error("Error applying rate limit:", error);
-    res.status(500).json({ message: "Internal server error" });
+    Logger.error('Error applying rate limit:', error);
+    return res
+      .status(500)
+      .json(ApiResponse.error('Internal server error'));
   }
-}
+};
 
-export default rateLimiter
+export default rateLimiter;

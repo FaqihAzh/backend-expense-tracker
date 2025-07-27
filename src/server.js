@@ -1,27 +1,27 @@
-import express from "express";
-import dotenv from "dotenv";
-import { initDB } from "./config/db.js";
-import rateLimiter from "./middleware/rateLimiter.js";
-import transactionsRoute from "./routes/transactionsRoute.js";
+import app from "./app.js";
+import Logger from "./utils/logger.js";
+import { config } from "./config/env.js";
 
-dotenv.config();
+const startServer = async () => {
+  try {
+    app.listen(config.port, () => {
+      Logger.info(`Server is running on port ${config.port}`);
+      Logger.info(`Environment: ${config.nodeEnv}`);
+    });
+  } catch (error) {
+    Logger.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
 
-const app = express();
-
-app.use(rateLimiter);
-app.use(express.json());
-
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  next();
-})
-
-const PORT = process.env.PORT || 5001;
-
-app.use("/api/v1/transactions", transactionsRoute);
-
-initDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
+process.on('SIGINT', () => {
+  Logger.info('Server shutting down...');
+  process.exit(0);
 });
+
+process.on('SIGTERM', () => {
+  Logger.info('Server shutting down...');
+  process.exit(0);
+});
+
+startServer();

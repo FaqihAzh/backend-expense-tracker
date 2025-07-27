@@ -1,0 +1,616 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Expense Tracker API",
+    "description": "A robust and scalable REST API for expense tracking applications built with Express.js, Prisma ORM, and PostgreSQL. Features clean architecture, comprehensive validation, rate limiting, and standardized API responses.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5001/api/v1",
+      "description": "Development server"
+    }
+  ],
+  "paths": {
+    "/transactions": {
+      "get": {
+        "tags": ["Transactions"],
+        "summary": "Get all transactions",
+        "description": "Retrieve a list of all transactions in the system",
+        "operationId": "getAllTransactions",
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved transactions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionListResponse"
+                },
+                "example": {
+                  "meta": {
+                    "message": "Request successful",
+                    "code": 200,
+                    "status": "success"
+                  },
+                  "data": [
+                    {
+                      "id": 1,
+                      "userId": "user123",
+                      "title": "Coffee Purchase",
+                      "amount": "-5.50",
+                      "category": "Food",
+                      "createdAt": "2024-01-15T00:00:00.000Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Transactions"],
+        "summary": "Create a new transaction",
+        "description": "Create a new transaction for a user",
+        "operationId": "createTransaction",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTransactionRequest"
+              },
+              "example": {
+                "user_id": "user123",
+                "title": "Coffee Purchase",
+                "amount": -5.50,
+                "category": "Food"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Transaction created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionResponse"
+                },
+                "example": {
+                  "meta": {
+                    "message": "Resource created successfully",
+                    "code": 201,
+                    "status": "success"
+                  },
+                  "data": {
+                    "id": 1,
+                    "userId": "user123",
+                    "title": "Coffee Purchase",
+                    "amount": "-5.50",
+                    "category": "Food",
+                    "createdAt": "2024-01-15T00:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/transactions/{userId}": {
+      "get": {
+        "tags": ["Transactions"],
+        "summary": "Get transactions by user ID",
+        "description": "Retrieve all transactions for a specific user",
+        "operationId": "getTransactionsByUserId",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "User identifier",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255
+            },
+            "example": "user123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved user transactions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/transactions/{id}": {
+      "delete": {
+        "tags": ["Transactions"],
+        "summary": "Delete a transaction",
+        "description": "Delete a specific transaction by ID",
+        "operationId": "deleteTransaction",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Transaction ID",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteResponse"
+                },
+                "example": {
+                  "meta": {
+                    "message": "Transaction deleted successfully",
+                    "code": 200,
+                    "status": "success"
+                  },
+                  "data": null
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/transactions/summary/{userId}": {
+      "get": {
+        "tags": ["Transactions"],
+        "summary": "Get transaction summary by user ID",
+        "description": "Get financial summary (balance, income, expense) for a specific user",
+        "operationId": "getTransactionSummary",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "User identifier",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255
+            },
+            "example": "user123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved transaction summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryResponse"
+                },
+                "example": {
+                  "meta": {
+                    "message": "Request successful",
+                    "code": 200,
+                    "status": "success"
+                  },
+                  "data": {
+                    "balance": "1250.00",
+                    "income": "2000.00",
+                    "expense": "-750.00"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Transaction": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique transaction identifier",
+            "example": 1
+          },
+          "userId": {
+            "type": "string",
+            "description": "User identifier",
+            "maxLength": 255,
+            "example": "user123"
+          },
+          "title": {
+            "type": "string",
+            "description": "Transaction title/description",
+            "maxLength": 255,
+            "example": "Coffee Purchase"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Transaction amount (negative for expenses, positive for income)",
+            "pattern": "^-?\\d+(\\.\\d{1,2})?$",
+            "example": "-5.50"
+          },
+          "category": {
+            "type": "string",
+            "description": "Transaction category",
+            "maxLength": 255,
+            "example": "Food"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Transaction creation timestamp",
+            "example": "2024-01-15T00:00:00.000Z"
+          }
+        },
+        "required": ["id", "userId", "title", "amount", "category", "createdAt"]
+      },
+      "CreateTransactionRequest": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "description": "User identifier",
+            "minLength": 1,
+            "maxLength": 255,
+            "example": "user123"
+          },
+          "title": {
+            "type": "string",
+            "description": "Transaction title/description",
+            "minLength": 1,
+            "maxLength": 255,
+            "example": "Coffee Purchase"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Transaction amount (negative for expenses, positive for income)",
+            "example": -5.50
+          },
+          "category": {
+            "type": "string",
+            "description": "Transaction category",
+            "minLength": 1,
+            "maxLength": 255,
+            "example": "Food"
+          }
+        },
+        "required": ["user_id", "title", "amount", "category"]
+      },
+      "TransactionSummary": {
+        "type": "object",
+        "properties": {
+          "balance": {
+            "type": "string",
+            "description": "Total balance (income - expenses)",
+            "example": "1250.00"
+          },
+          "income": {
+            "type": "string",
+            "description": "Total income",
+            "example": "2000.00"
+          },
+          "expense": {
+            "type": "string",
+            "description": "Total expenses",
+            "example": "-750.00"
+          }
+        },
+        "required": ["balance", "income", "expense"]
+      },
+      "ApiMeta": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Response message",
+            "example": "Request successful"
+          },
+          "code": {
+            "type": "integer",
+            "description": "HTTP status code",
+            "example": 200
+          },
+          "status": {
+            "type": "string",
+            "enum": ["success", "error", "fail"],
+            "description": "Response status",
+            "example": "success"
+          }
+        },
+        "required": ["message", "code", "status"]
+      },
+      "ValidationError": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "Field that failed validation",
+            "example": "user_id"
+          },
+          "message": {
+            "type": "string",
+            "description": "Validation error message",
+            "example": "User ID is required"
+          },
+          "value": {
+            "description": "Invalid value that was provided"
+          }
+        },
+        "required": ["field", "message"]
+      },
+      "TransactionResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/ApiMeta"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Transaction"
+          }
+        },
+        "required": ["meta", "data"]
+      },
+      "TransactionListResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/ApiMeta"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Transaction"
+            }
+          }
+        },
+        "required": ["meta", "data"]
+      },
+      "SummaryResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/ApiMeta"
+          },
+          "data": {
+            "$ref": "#/components/schemas/TransactionSummary"
+          }
+        },
+        "required": ["meta", "data"]
+      },
+      "DeleteResponse": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/ApiMeta"
+          },
+          "data": {
+            "type": "null",
+            "description": "No data returned for delete operations"
+          }
+        },
+        "required": ["meta", "data"]
+      }
+    },
+    "responses": {
+      "ValidationError": {
+        "description": "Validation failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "meta": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Validation failed"
+                    },
+                    "code": {
+                      "type": "integer",
+                      "example": 422
+                    },
+                    "status": {
+                      "type": "string",
+                      "example": "fail"
+                    }
+                  }
+                },
+                "data": {
+                  "type": "null"
+                },
+                "errors": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ValidationError"
+                  }
+                }
+              }
+            },
+            "example": {
+              "meta": {
+                "message": "Validation failed",
+                "code": 422,
+                "status": "fail"
+              },
+              "data": null,
+              "errors": [
+                {
+                  "field": "user_id",
+                  "message": "User ID is required",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      },
+      "NotFoundError": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "meta": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Resource not found"
+                    },
+                    "code": {
+                      "type": "integer",
+                      "example": 404
+                    },
+                    "status": {
+                      "type": "string",
+                      "example": "fail"
+                    }
+                  }
+                },
+                "data": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        }
+      },
+      "RateLimitError": {
+        "description": "Rate limit exceeded",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "meta": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Too many requests, please try again later"
+                    },
+                    "code": {
+                      "type": "integer",
+                      "example": 429
+                    },
+                    "status": {
+                      "type": "string",
+                      "example": "error"
+                    }
+                  }
+                },
+                "data": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "meta": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Internal server error"
+                    },
+                    "code": {
+                      "type": "integer",
+                      "example": 500
+                    },
+                    "status": {
+                      "type": "string",
+                      "example": "error"
+                    }
+                  }
+                },
+                "data": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Transactions",
+      "description": "Transaction management operations"
+    }
+  ]
+}
