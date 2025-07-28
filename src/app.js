@@ -4,6 +4,7 @@ import rateLimiter from './middleware/rateLimiter.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import routes from './routes/index.js';
 import swaggerRoutes from "./routes/swaggerRoutes.js";
+import job from "./config/cron.js";
 
 const app = express();
 
@@ -11,6 +12,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(rateLimiter);
+
+// Cron Job
+if (process.env.NODE_ENV === "production") job.start();
 
 // API Documentation
 app.use('/api-docs', swaggerRoutes);
