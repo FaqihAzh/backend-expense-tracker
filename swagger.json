@@ -3,7 +3,7 @@
   "info": {
     "title": "Expense Tracker API",
     "description": "A robust and scalable REST API for expense tracking applications built with Express.js, Prisma ORM, and PostgreSQL. Features clean architecture, comprehensive validation, rate limiting, and standardized API responses.",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "servers": [
     {
@@ -15,9 +15,59 @@
     "/transactions": {
       "get": {
         "tags": ["Transactions"],
-        "summary": "Get all transactions",
-        "description": "Retrieve a list of all transactions in the system",
+        "summary": "Get all transactions with optional filters",
+        "description": "Retrieve a list of all transactions in the system with optional filters.",
         "operationId": "getAllTransactions",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "description": "Filter by category",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minAmount",
+            "in": "query",
+            "required": false,
+            "description": "Minimum amount filter",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "maxAmount",
+            "in": "query",
+            "required": false,
+            "description": "Maximum amount filter",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "description": "Filter by transaction type (income or expense)",
+            "schema": {
+              "type": "string",
+              "enum": ["income", "expense"]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Limit the number of results",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successfully retrieved transactions",
@@ -25,23 +75,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TransactionListResponse"
-                },
-                "example": {
-                  "meta": {
-                    "message": "Request successful",
-                    "code": 200,
-                    "status": "success"
-                  },
-                  "data": [
-                    {
-                      "id": 1,
-                      "userId": "user123",
-                      "title": "Coffee Purchase",
-                      "amount": "-5.50",
-                      "category": "Food",
-                      "createdAt": "2024-01-15T00:00:00.000Z"
-                    }
-                  ]
                 }
               }
             }
@@ -57,7 +90,7 @@
       "post": {
         "tags": ["Transactions"],
         "summary": "Create a new transaction",
-        "description": "Create a new transaction for a user",
+        "description": "Create a new transaction for a user.",
         "operationId": "createTransaction",
         "requestBody": {
           "required": true,
@@ -65,12 +98,6 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CreateTransactionRequest"
-              },
-              "example": {
-                "user_id": "user123",
-                "title": "Coffee Purchase",
-                "amount": -5.50,
-                "category": "Food"
               }
             }
           }
@@ -82,21 +109,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TransactionResponse"
-                },
-                "example": {
-                  "meta": {
-                    "message": "Resource created successfully",
-                    "code": 201,
-                    "status": "success"
-                  },
-                  "data": {
-                    "id": 1,
-                    "userId": "user123",
-                    "title": "Coffee Purchase",
-                    "amount": "-5.50",
-                    "category": "Food",
-                    "createdAt": "2024-01-15T00:00:00.000Z"
-                  }
                 }
               }
             }
@@ -113,11 +125,11 @@
         }
       }
     },
-    "/transactions/{userId}": {
+    "/transactions/user/{userId}": {
       "get": {
         "tags": ["Transactions"],
-        "summary": "Get transactions by user ID",
-        "description": "Retrieve all transactions for a specific user",
+        "summary": "Get transactions by user ID with optional filters",
+        "description": "Retrieve all transactions for a specific user with optional filters.",
         "operationId": "getTransactionsByUserId",
         "parameters": [
           {
@@ -126,11 +138,35 @@
             "required": true,
             "description": "User identifier",
             "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 255
-            },
-            "example": "user123"
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "description": "Filter by category",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minAmount",
+            "in": "query",
+            "required": false,
+            "description": "Minimum amount filter",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "maxAmount",
+            "in": "query",
+            "required": false,
+            "description": "Maximum amount filter",
+            "schema": {
+              "type": "number"
+            }
           }
         ],
         "responses": {
@@ -156,12 +192,310 @@
         }
       }
     },
-    "/transactions/{id}": {
-      "delete": {
+    "/transactions/summary/{userId}": {
+      "get": {
         "tags": ["Transactions"],
-        "summary": "Delete a transaction",
-        "description": "Delete a specific transaction by ID",
-        "operationId": "deleteTransaction",
+        "summary": "Get transaction summary for user",
+        "description": "Get financial summary (balance, income, expense) for a specific user.",
+        "operationId": "getTransactionSummary",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "User identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved transaction summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/transactions/category-summary/{userId}": {
+      "get": {
+        "tags": ["Transactions"],
+        "summary": "Get category summary for user",
+        "description": "Get summary of transactions by category for a specific user.",
+        "operationId": "getCategorySummary",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "User identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved category summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "category": {
+                        "type": "string"
+                      },
+                      "totalAmount": {
+                        "type": "number"
+                      },
+                      "transactionCount": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/transactions/monthly-report/{userId}/{year}": {
+      "get": {
+        "tags": ["Transactions"],
+        "summary": "Get monthly report for user",
+        "description": "Get a detailed report of transactions for a specific user in a given year.",
+        "operationId": "getMonthlyReport",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "User identifier",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "year",
+            "in": "path",
+            "required": true,
+            "description": "Year for the report",
+            "schema": {
+              "type": "integer",
+              "minimum": 2000,
+              "maximum": 2100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved monthly report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "month": {
+                        "type": "integer"
+                      },
+                      "income": {
+                        "type": "number"
+                      },
+                      "expense": {
+                        "type": "number"
+                      },
+                      "balance": {
+                        "type": "number"
+                      },
+                      "count": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/transactions/top-categories/{userId}": {
+      "get": {
+        "tags": ["Transactions"],
+        "summary": "Get top categories for user",
+        "description": "Retrieve the top categories by transaction count for a specific user.",
+        "operationId": "getTopCategories",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "User identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved top categories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "category": {
+                        "type": "string"
+                      },
+                      "totalAmount": {
+                        "type": "number"
+                      },
+                      "transactionCount": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/transactions/analytics/{userId}": {
+      "get": {
+        "tags": ["Transactions"],
+        "summary": "Get advanced analytics for user",
+        "description": "Retrieve advanced analytics for a specific user.",
+        "operationId": "getAdvancedAnalytics",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "User identifier",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "description": "Period for analytics (week, month, quarter, year)",
+            "schema": {
+              "type": "string",
+              "enum": ["week", "month", "quarter", "year"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved advanced analytics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "summary": {
+                      "type": "object"
+                    },
+                    "categoryBreakdown": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "topCategories": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "recentTransactions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "insights": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/transactions/{id}": {
+      "get": {
+        "tags": ["Transactions"],
+        "summary": "Get single transaction by ID",
+        "description": "Retrieve a specific transaction by its ID.",
+        "operationId": "getTransactionById",
         "parameters": [
           {
             "name": "id",
@@ -169,27 +503,17 @@
             "required": true,
             "description": "Transaction ID",
             "schema": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "example": 1
+              "type": "integer"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Transaction deleted successfully",
+            "description": "Successfully retrieved transaction",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DeleteResponse"
-                },
-                "example": {
-                  "meta": {
-                    "message": "Transaction deleted successfully",
-                    "code": 200,
-                    "status": "success"
-                  },
-                  "data": null
+                  "$ref": "#/components/schemas/TransactionResponse"
                 }
               }
             }
@@ -207,50 +531,87 @@
             "$ref": "#/components/responses/InternalServerError"
           }
         }
-      }
-    },
-    "/transactions/summary/{userId}": {
-      "get": {
+      },
+      "put": {
         "tags": ["Transactions"],
-        "summary": "Get transaction summary by user ID",
-        "description": "Get financial summary (balance, income, expense) for a specific user",
-        "operationId": "getTransactionSummary",
+        "summary": "Update transaction",
+        "description": "Update a specific transaction by ID.",
+        "operationId": "updateTransaction",
         "parameters": [
           {
-            "name": "userId",
+            "name": "id",
             "in": "path",
             "required": true,
-            "description": "User identifier",
+            "description": "Transaction ID",
             "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 255
-            },
-            "example": "user123"
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTransactionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transaction updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Transactions"],
+        "summary": "Delete transaction",
+        "description": "Delete a specific transaction by ID.",
+        "operationId": "deleteTransaction",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Transaction ID",
+            "schema": {
+              "type": "integer"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Successfully retrieved transaction summary",
+            "description": "Transaction deleted successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SummaryResponse"
-                },
-                "example": {
-                  "meta": {
-                    "message": "Request successful",
-                    "code": 200,
-                    "status": "success"
-                  },
-                  "data": {
-                    "balance": "1250.00",
-                    "income": "2000.00",
-                    "expense": "-750.00"
-                  }
+                  "$ref": "#/components/schemas/DeleteResponse"
                 }
               }
             }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
           },
           "422": {
             "$ref": "#/components/responses/ValidationError"
@@ -334,11 +695,36 @@
             "type": "string",
             "description": "Transaction category",
             "minLength": 1,
-            "maxLength": 255,
+            "maxLength":255,
             "example": "Food"
           }
         },
         "required": ["user_id", "title", "amount", "category"]
+      },
+      "UpdateTransactionRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Transaction title/description",
+            "minLength": 1,
+            "maxLength": 255,
+            "example": "Updated Coffee Purchase"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Transaction amount (negative for expenses, positive for income)",
+            "example": -6.00
+          },
+          "category": {
+            "type": "string",
+            "description": "Transaction category",
+            "minLength": 1,
+            "maxLength": 255,
+            "example": "Beverages"
+          }
+        },
+        "required": []
       },
       "TransactionSummary": {
         "type": "object",

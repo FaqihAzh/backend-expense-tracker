@@ -94,9 +94,9 @@ export const monthValidator = [
     .isInt({ min: 2000, max: 2100 })
     .withMessage('Year must be a valid year between 2000 and 2100'),
 
-  param('month')
-    .isInt({ min: 1, max: 12 })
-    .withMessage('Month must be between 1 and 12'),
+  // param('month')
+  //   .isInt({ min: 1, max: 12 })
+  //   .withMessage('Month must be between 1 and 12'),
 ];
 
 export const queryFiltersValidator = [
