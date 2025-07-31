@@ -327,7 +327,7 @@ project-root/
 │   ├── validators/
 │   │   └── transactionValidator.js   # Input validation rules
 │   └── app.js                 # Express app configuration
-├── server.js                  # Server entry point
+├── index.js                  # Server entry point
 ├── package.json
 ├── .env.example
 └── README.md
