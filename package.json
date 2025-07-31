@@ -3,9 +3,14 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
-    "dev": "nodemon src/server.js",
-    "start": "node src/server.js"
+    "build": "prisma generate",
+    "vercel-build": "prisma generate && prisma db push",
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
   },
   "keywords": [],
   "type": "module",

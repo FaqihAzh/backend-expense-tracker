@@ -1,9 +1,12 @@
 import pkg from '@prisma/client';
 const { PrismaClient } = pkg;
-import { config } from './env.js';
 
-const prisma = new PrismaClient({
-  log: config.nodeEnv === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
+const globalForPrisma = globalThis;
+
+export const prisma = globalForPrisma.prisma || new PrismaClient({
+  log: ['error'],
 });
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 export default prisma;
