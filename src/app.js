@@ -14,7 +14,11 @@ app.use(express.json());
 app.use(rateLimiter);
 
 // Cron Job
-if (process.env.NODE_ENV === "production") job.start();
+if (process.env.NODE_ENV === "development") {
+  job.start();
+} else {
+  console.log("Cron job disabled in production - using external service");
+}
 
 // API Documentation
 app.use('/api-docs', swaggerRoutes);
