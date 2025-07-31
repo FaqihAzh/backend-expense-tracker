@@ -15,12 +15,6 @@
       "dest": "src/server.js"
     }
   ],
-  "crons": [
-    {
-      "path": "/api/v1/health",
-      "schedule": "0 0 * * *"
-    }
-  ],
   "env": {
     "NODE_ENV": "production"
   }
