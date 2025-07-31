@@ -7,18 +7,14 @@ import swaggerRoutes from "./routes/swaggerRoutes.js";
 
 const app = express();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(rateLimiter);
 
-// API Documentation
 app.use('/api-docs', swaggerRoutes);
 
-// API Routes
 app.use('/api/v1', routes);
 
-// Root route
 app.get('/', (req, res) => {
   res.json({
     message: 'Welcome to Expense Tracker API',
