@@ -11,7 +11,7 @@
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
     "build": "prisma generate",
-    "vercel-build": "prisma generate && prisma db push"
+    "vercel-build": "npx prisma migrate deploy && npm run build"
   },
   "keywords": [],
   "author": "",
